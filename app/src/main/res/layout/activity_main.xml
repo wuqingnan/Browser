@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:keepScreenOn="true"
+	tools:context="com.shizy.bookreader.MainActivity">
+
+	<android.support.design.widget.AppBarLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="@null"
+		android:orientation="vertical">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="?attr/actionBarSize"
+			android:background="@color/colorPrimary"
+			android:gravity="center_vertical"
+			android:orientation="horizontal"
+			android:paddingEnd="8dp"
+			android:paddingStart="8dp"
+			app:layout_scrollFlags="scroll|enterAlways">
+
+			<ImageButton
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:background="@null"
+				android:onClick="goHome"
+				android:src="@drawable/home" />
+
+			<com.shizy.bookreader.view.ClearEditText
+				android:id="@+id/edit_input"
+				android:layout_width="0dp"
+				android:layout_height="32dp"
+				android:layout_marginEnd="8dp"
+				android:layout_marginStart="8dp"
+				android:layout_weight="1"
+				android:background="@drawable/bg_edit"
+				android:drawableLeft="@drawable/search"
+				android:drawablePadding="3dp"
+				android:gravity="center_vertical"
+				android:imeOptions="actionSearch"
+				android:inputType="text"
+				android:paddingEnd="5dp"
+				android:paddingStart="5dp"
+				android:singleLine="true"
+				android:textColor="#333333"
+				android:textSize="12dp" />
+
+			<ImageButton
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:background="@null"
+				android:onClick="refresh"
+				android:src="@drawable/refresh" />
+		</LinearLayout>
+
+		<ProgressBar
+			android:id="@+id/progress"
+			style="@android:style/Widget.Material.ProgressBar.Horizontal"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:max="100"
+			android:minHeight="2dp" />
+	</android.support.design.widget.AppBarLayout>
+
+	<WebView
+		android:id="@+id/webview"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:focusable="true"
+		android:focusableInTouchMode="true"
+		android:scrollbars="none"
+		app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+	<ImageButton
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="bottom|start"
+		android:layout_marginBottom="100dp"
+		android:layout_marginStart="8dp"
+		android:alpha="0.4"
+		android:onClick="goBack"
+		android:src="@drawable/back" />
+
+	<ImageButton
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="bottom|end"
+		android:layout_marginBottom="100dp"
+		android:layout_marginEnd="8dp"
+		android:alpha="0.4"
+		android:onClick="goForward"
+		android:src="@drawable/more" />
+
+</android.support.design.widget.CoordinatorLayout>
