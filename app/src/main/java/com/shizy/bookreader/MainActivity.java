@@ -1,6 +1,9 @@
 package com.shizy.bookreader;
 
+import android.app.Activity;
+import android.content.ClipData;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -14,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.SslErrorHandler;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -53,7 +57,16 @@ public class MainActivity extends AppCompatActivity {
 	private EditText mInputEdit;
 	private ProgressBar mProgressBar;
 	private WebView mWebView;
+	private CustomChromeClient mWebChromeClient;
 	private SharedPreferences mPref;
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (mWebChromeClient != null) {
+			mWebChromeClient.onFileChooserResult(requestCode, resultCode, data);
+		}
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -117,18 +130,8 @@ public class MainActivity extends AppCompatActivity {
 		settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 		settings.setDomStorageEnabled(true);
 
-		mWebView.setWebChromeClient(new WebChromeClient() {
-			@Override
-			public void onReceivedTitle(WebView view, String title) {
-				Log.d(TAG, "onReceivedTitle: " + title);
-			}
-
-			@Override
-			public void onProgressChanged(WebView view, int newProgress) {
-				super.onProgressChanged(view, newProgress);
-				mProgressBar.setProgress(newProgress);
-			}
-		});
+		mWebChromeClient = new CustomChromeClient();
+		mWebView.setWebChromeClient(mWebChromeClient);
 
 		mWebView.setWebViewClient(new WebViewClient() {
 			@Override
@@ -196,6 +199,83 @@ public class MainActivity extends AppCompatActivity {
 		if (imm != null && imm.isActive()) {
 			mInputEdit.clearFocus();
 			imm.hideSoftInputFromWindow(mInputEdit.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+		}
+	}
+
+	private class CustomChromeClient extends WebChromeClient {
+
+		private static final int RC_CHOOSE_FILE = 0x1234;
+
+		private ValueCallback<Uri> mUploadFile;
+		private ValueCallback<Uri[]> mUploadMultiFiles;
+
+		@Override
+		public void onReceivedTitle(WebView view, String title) {
+			Log.d(TAG, "onReceivedTitle: " + title);
+		}
+
+		@Override
+		public void onProgressChanged(WebView view, int newProgress) {
+			super.onProgressChanged(view, newProgress);
+			mProgressBar.setProgress(newProgress);
+		}
+
+		// 3.0
+		public void openFileChooser(ValueCallback<Uri> uploadFile, String acceptType) {
+			openFileChooser(uploadFile, acceptType, null);
+		}
+
+		// 4.1.2
+		public void openFileChooser(ValueCallback<Uri> uploadFile, String acceptType, String capture) {
+			mUploadFile = uploadFile;
+			openFileChooserActivity(acceptType);
+		}
+
+		// 5.0
+		@Override
+		public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+			mUploadMultiFiles = filePathCallback;
+			openFileChooserActivity(fileChooserParams.getAcceptTypes());
+			return true;
+		}
+
+		private void openFileChooserActivity(String... acceptTypes) {
+			String acceptType = "image/*";
+			if (acceptTypes != null && acceptTypes.length > 0) {
+				acceptType = acceptTypes[0];
+			}
+
+			Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+			intent.addCategory(Intent.CATEGORY_OPENABLE);
+			intent.setType(acceptType);
+			startActivityForResult(Intent.createChooser(intent, "Chooser"), RC_CHOOSE_FILE);
+		}
+
+		private void onFileChooserResult(int requestCode, int resultCode, Intent data) {
+			if (requestCode == RC_CHOOSE_FILE) {
+				if (mUploadMultiFiles != null) {
+					Uri[] uris = null;
+					if (data != null && resultCode == Activity.RESULT_OK) {
+						String dataString = data.getDataString();
+						ClipData clipData = data.getClipData();
+						if (clipData != null) {
+							uris = new Uri[clipData.getItemCount()];
+							for (int i = 0; i < clipData.getItemCount(); i++) {
+								uris[i] = clipData.getItemAt(i).getUri();
+							}
+						}
+						if (dataString != null) {
+							uris = new Uri[]{Uri.parse(dataString)};
+						}
+					}
+					mUploadMultiFiles.onReceiveValue(uris);
+					mUploadMultiFiles = null;
+				} else if (mUploadFile != null) {
+					Uri uri = (data == null || resultCode != RESULT_OK) ? null : data.getData();
+					mUploadFile.onReceiveValue(uri);
+					mUploadFile = null;
+				}
+			}
 		}
 	}
 
